@@ -7,6 +7,7 @@ import subcategoryRoutes from './routes/subcategories.js';
 import productRoutes from './routes/products.js';
 import catalogueTypeRoutes from './routes/catalogueTypes.js';
 import catalogueRoutes from './routes/catalogues.js';
+import userRoutes from './routes/userRoutes.js';
 import favouriteRoutes from './routes/favourites.js';
 import { errorHandler } from './middleware/error.js';
 import cors from 'cors';
@@ -21,7 +22,7 @@ app.use(cors({
   }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
-
+app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/subcategories', subcategoryRoutes);
