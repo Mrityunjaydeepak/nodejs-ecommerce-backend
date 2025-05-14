@@ -9,11 +9,16 @@ import catalogueTypeRoutes from './routes/catalogueTypes.js';
 import catalogueRoutes from './routes/catalogues.js';
 import favouriteRoutes from './routes/favourites.js';
 import { errorHandler } from './middleware/error.js';
+import cors from 'cors';
 
 dotenv.config();
 connectDB();
 
 const app = express();
+app.use(cors({
+    origin: '*',  
+    
+  }));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
