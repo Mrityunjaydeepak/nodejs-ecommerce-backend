@@ -10,6 +10,7 @@ import catalogueRoutes from './routes/catalogues.js';
 import userRoutes from './routes/userRoutes.js';
 import favouriteRoutes from './routes/favourites.js';
 import { errorHandler } from './middleware/error.js';
+import youtubeRoutes from './routes/youtubeRoutes.js';
 import cors from 'cors';
 
 dotenv.config();
@@ -30,6 +31,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/catalogue-types', catalogueTypeRoutes);
 app.use('/api/catalogues', catalogueRoutes);
 app.use('/api/favourites', favouriteRoutes);
+app.use('/api/youtube', youtubeRoutes);
 
 app.use(errorHandler);
 
