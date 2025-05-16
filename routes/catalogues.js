@@ -1,16 +1,24 @@
+// routes/catalogues.js
 import express from 'express';
-import { getCatalogues, createCatalogue } from '../controllers/catalogueController.js';
-import { protect } from '../middleware/auth.js';
-import { uploadPdf } from '../middleware/uploadPdf.js';
-
+import {
+  getCatalogues,
+  createCatalogue,
+  deleteCatalogue
+} from '../controllers/catalogueController.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
-router.route('/').get(getCatalogues).post(protect, createCatalogue);
-router.post(
-  '/', 
-  protect, 
-  uploadPdf.single('pdf'), 
-  createCatalogue
-);
+
+// GET all catalogues
+// POST a new catalogue (expects { name, pdf: "<PDF_URL>" } in JSON body)
+router
+  .route('/')
+  .get(getCatalogues)
+  .post(protect, adminOnly, createCatalogue);
+
+// DELETE a catalogue by ID
+router
+  .route('/:id')
+  .delete(protect, adminOnly, deleteCatalogue);
 
 export default router;
