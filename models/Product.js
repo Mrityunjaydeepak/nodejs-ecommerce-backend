@@ -2,27 +2,21 @@
 import mongoose from 'mongoose';
 
 const ProductSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  productNumber: { type: String, required: true, unique: true },
-  description: { type: String },                           // 📄 new
-  subcategory: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Subcategory',
-    required: true
-  },
-  available: { type: Boolean, default: true },
-  mrp:       { type: Number, required: true },
-  image:     { type: String },
+  name:            { type: String, required: true },
+  productNumber:   { type: String, required: true, unique: true },
+  description:     { type: String },
+  subcategory:     { type: mongoose.Schema.Types.ObjectId, ref: 'Subcategory', required: true },
+  available:       { type: Boolean, default: true },
+  mrp:             { type: Number, required: true },
 
-  variations: [                                           // 🎨 new
-    { color: String }
-  ],
-  features: [{ type: String }],                          // ✅ new
-  optionalSpecifications: [{ type: String }],            // ⚙️ new
-  projects: [{ type: String }],                          // 📁 new
-  combinations: [                                        // 🔗 new
-    { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }
-  ],
+  // replace your single `image` with an array:
+  images:          [{ type: String }],  
+
+  variations:      [{ color: String }],
+  features:        [{ type: String }],
+  optionalSpecifications: [{ type: String }],
+  projects:        [{ type: String }],
+  combinations:    [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
 }, {
   timestamps: true
 });

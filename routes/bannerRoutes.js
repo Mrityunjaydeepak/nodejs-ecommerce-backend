@@ -1,24 +1,39 @@
+// routes/banners.js
 import express from 'express';
-import { protect, adminOnly } from '../middleware/auth.js';
 import {
   getBannerCategories,
   createBannerCategory,
   updateBannerCategory,
   deleteBannerCategory,
   addBanner,
+  updateBanner,
   removeBanner
 } from '../controllers/bannerController.js';
+import { protect, adminOnly } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Category endpoints
-router.get('/', protect, adminOnly, getBannerCategories);
-router.post('/', protect, adminOnly, createBannerCategory);
-router.put('/:id', protect, adminOnly, updateBannerCategory);
-router.delete('/:id', protect, adminOnly, deleteBannerCategory);
+// /api/banners
+router
+  .route('/')
+  .get(getBannerCategories)
+  .post(protect, adminOnly, createBannerCategory);
 
-// Banner endpoints
-router.post('/:id/banners', protect, adminOnly, addBanner);
-router.delete('/:id/banners/:bid', protect, adminOnly, removeBanner);
+// /api/banners/:id
+router
+  .route('/:id')
+  .put(protect, adminOnly, updateBannerCategory)
+  .delete(protect, adminOnly, deleteBannerCategory);
+
+// /api/banners/:id/banners
+router
+  .route('/:id/banners')
+  .post(protect, adminOnly, addBanner);
+
+// /api/banners/:id/banners/:bid
+router
+  .route('/:id/banners/:bid')
+  .put(protect, adminOnly, updateBanner)    // ← new
+  .delete(protect, adminOnly, removeBanner);
 
 export default router;

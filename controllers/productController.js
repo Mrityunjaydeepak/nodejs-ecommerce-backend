@@ -18,7 +18,7 @@ export const createProduct = async (req, res) => {
     subcategory,
     available,
     mrp,
-    image,
+    images,
     variations,             // array of { color }
     features,               // array of strings
     optionalSpecifications, // array of strings
@@ -33,7 +33,7 @@ export const createProduct = async (req, res) => {
     subcategory,
     available,
     mrp,
-    image,
+    images,
     variations,
     features,
     optionalSpecifications,
@@ -64,7 +64,7 @@ export const updateProduct = async (req, res) => {
     'subcategory',
     'available',
     'mrp',
-    'image',
+    'images',
     'variations',
     'features',
     'optionalSpecifications',
