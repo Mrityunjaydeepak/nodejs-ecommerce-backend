@@ -5,6 +5,38 @@ export const getCategories = async (req, res) => {
   res.json(categories);
 };
 
+// GET /api/categories
+// Returns each category + up to `limit` of its subcategories (default: 10)
+export const getCategoriesWithSubs = async (req, res) => {
+  const limit = parseInt(req.query.limit, 10) || 10;
+
+  // use aggregation to slice the array in the database
+  const categories = await Category.aggregate([
+    {
+      $project: {
+        name: 1,
+        image: 1,                   // whatever other fields you need
+        subcategories: { $slice: ['$subcategories', limit] }
+      }
+    }
+  ]);
+
+  res.json(categories);
+};
+
+// GET /api/categories/:id/subcategories
+// Returns *all* subcategories for one category
+export const getAllSubcategories = async (req, res) => {
+  const { id } = req.params;
+  const category = await Category.findById(id).select('subcategories');
+
+  if (!category) {
+    return res.status(404).json({ message: 'Category not found' });
+  }
+
+  res.json(category.subcategories);
+};
+
 export const createCategory = async (req, res) => {
   const { name, image } = req.body;
   const category = new Category({ name, image });

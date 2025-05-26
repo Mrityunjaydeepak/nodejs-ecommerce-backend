@@ -12,16 +12,17 @@ import favouriteRoutes from './routes/favourites.js';
 import { errorHandler } from './middleware/error.js';
 import youtubeRoutes from './routes/youtubeRoutes.js';
 import bannerRoutes from './routes/bannerRoutes.js';
+import enquiryRoutes from './routes/enquiryRoutes.js';
 import cors from 'cors';
 
 dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors({
-    origin: '*',  
-    
-  }));
+
+app.use('/api/enquiries', enquiryRoutes);
+
+app.use(cors()); 
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 app.use('/api/users', userRoutes);

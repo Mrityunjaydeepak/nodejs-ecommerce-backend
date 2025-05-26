@@ -3,7 +3,8 @@ import express from 'express';
 import {
   getCatalogues,
   createCatalogue,
-  deleteCatalogue
+  deleteCatalogue,
+  getCataloguesByType
 } from '../controllers/catalogueController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -16,6 +17,8 @@ router
   .get(getCatalogues)
   .post(protect, adminOnly, createCatalogue);
 
+  router.route('/type/:typeId')
+  .get(getCataloguesByType);
 // DELETE a catalogue by ID
 router
   .route('/:id')

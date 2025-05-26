@@ -8,6 +8,42 @@ export const getBannerCategories = async (req, res) => {
   res.json(cats);
 };
 
+
+// controllers/bannerController.js
+
+
+// GET /api/banners/all?page=1&limit=10
+export const getAllBanners = async (req, res) => {
+  // parse pagination params (defaults: page 1, 10 items/page)
+  const page  = Math.max(1, parseInt(req.query.page, 10)  || 1);
+  const limit = Math.max(1, parseInt(req.query.limit, 10) || 10);
+  const skip  = (page - 1) * limit;
+
+  // 1) count total banners
+  const countResult = await BannerCategory.aggregate([
+    { $unwind: '$banners' },
+    { $count: 'total' }
+  ]);
+  const total = countResult[0]?.total || 0;
+
+  // 2) pull out, skip & limit
+  const data = await BannerCategory.aggregate([
+    { $unwind: '$banners' },
+    { $replaceRoot: { newRoot: '$banners' } },   // now each doc is a banner object
+    { $skip: skip },
+    { $limit: limit }
+  ]);
+
+  // return paged response
+  res.json({
+    total,                // total banners across all categories
+    page,                 // current page
+    pages: Math.ceil(total / limit),
+    limit,  
+    data                  // array of banner objects
+  });
+};
+
 // POST /api/banners
 export const createBannerCategory = async (req, res) => {
   const { name } = req.body;

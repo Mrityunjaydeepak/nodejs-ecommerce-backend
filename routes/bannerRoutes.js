@@ -7,7 +7,8 @@ import {
   deleteBannerCategory,
   addBanner,
   updateBanner,
-  removeBanner
+  removeBanner,
+  getAllBanners 
 } from '../controllers/bannerController.js';
 import { protect, adminOnly } from '../middleware/auth.js';
 
@@ -19,6 +20,11 @@ router
   .get(getBannerCategories)
   .post(protect, adminOnly, createBannerCategory);
 
+
+
+router
+  .route('/all')
+  .get(getAllBanners);
 // /api/banners/:id
 router
   .route('/:id')

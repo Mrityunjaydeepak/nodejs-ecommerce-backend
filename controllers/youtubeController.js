@@ -6,6 +6,16 @@ export const getCategories = async (req, res) => {
   res.json(cats);
 };
 
+// GET /api/youtube/:id/videos
+export const getVideosByCategory = async (req, res) => {
+  const cat = await YoutubeCategory.findById(req.params.id);
+  if (!cat) {
+    return res.status(404).json({ message: 'Category not found' });
+  }
+  // return just the videos array
+  res.json(cat.videos);
+};
+
 // POST /api/youtube
 export const createCategory = async (req, res) => {
   const { name } = req.body;
@@ -46,7 +56,9 @@ export const addVideo = async (req, res) => {
 export const removeVideo = async (req, res) => {
   const cat = await YoutubeCategory.findById(req.params.id);
   if (!cat) return res.status(404).json({ message: 'Category not found' });
-  cat.videos.id(req.params.vid)?.remove();
+  const vid = cat.videos.id(req.params.vid);
+  if (!vid) return res.status(404).json({ message: 'Video not found' });
+  vid.remove();
   await cat.save();
   res.json(cat);
 };

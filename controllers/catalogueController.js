@@ -1,11 +1,19 @@
-// controllers/catalogueController.js
 import Catalogue from '../models/Catalogue.js';
 
 // GET /api/catalogues
 // Returns all catalogues, with their types populated
 export const getCatalogues = async (req, res) => {
   const catalogues = await Catalogue.find({})
-    .populate('type', 'name');  // assuming your type model has a 'name' field
+    .populate('type', 'name');
+  res.json(catalogues);
+};
+
+// GET /api/catalogues/type/:typeId
+// Returns all catalogues for a specific catalogue type/category
+export const getCataloguesByType = async (req, res) => {
+  const { typeId } = req.params;
+  const catalogues = await Catalogue.find({ type: typeId })
+    .populate('type', 'name');
   res.json(catalogues);
 };
 
@@ -19,7 +27,6 @@ export const createCatalogue = async (req, res) => {
       .json({ message: 'Name, PDF URL, and type are all required' });
   }
 
-  // Create and then re-query to populate
   const newCatalogue = await Catalogue.create({ name, pdf, type });
   const populated = await Catalogue.findById(newCatalogue._id)
     .populate('type', 'name');

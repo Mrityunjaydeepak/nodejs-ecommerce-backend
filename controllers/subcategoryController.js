@@ -2,9 +2,18 @@ import Subcategory from '../models/Subcategory.js';
 
 // GET /api/subcategories
 export const getSubcategories = async (req, res) => {
-  const subcategories = await Subcategory.find({})
+  const { categoryId } = req.query;
+  let query = {};
+
+  // If they passed ?categoryId=… filter by that
+  if (categoryId) {
+    query.category = categoryId;
+  }
+
+  const subcategories = await Subcategory.find(query)
     .populate('category', 'name')
     .populate('parent', 'name');
+
   res.json(subcategories);
 };
 
