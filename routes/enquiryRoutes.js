@@ -1,33 +1,23 @@
+// routes/enquiryRoutes.js
+
 import express from 'express';
+import cors from 'cors';
 import { protect } from '../middleware/auth.js';
-import { getEnquiries, addEnquiry } from '../controllers/enquiryController.js';
+import { getEnquiries, addEnquiry, removeEnquiry } from '../controllers/enquiryController.js';
 
 const router = express.Router();
 
-// GET /api/enquiries        → list your enquiries
-// POST /api/enquiries       → create a new one
+// 1) Mount CORS on this router exactly as you do globally for your other routes.
+//    If you’re using the default cors() with no options elsewhere, do the same here:
+router.use(cors());
 
+// 2) Explicitly handle preflight for every path under /api/enquiries
+//    (this makes sure ANY OPTIONS request gets a 200 + CORS headers)
+router.options('*', cors());
 
-/**
- * @route   GET /api/enquiries
- * @desc    Get all enquiries made by the authenticated user
- * @access  Protected
- */
-router.get('/', protect, getEnquiries);
-
-/**
- * @route   POST /api/enquiries
- * @desc    Send a new enquiry about a product
- * @access  Protected
- * @body    { productId: string, message?: string }
- */
-router.post('/', protect, addEnquiry);
-
-
-
-router
-  .route('/')
-  .get(protect, getEnquiries)
-  .post(protect, addEnquiry);
+// 3) Now define your protected endpoints
+router.get('/',    protect, getEnquiries);
+router.post('/',   protect, addEnquiry);
+router.delete('/:id', protect, removeEnquiry);
 
 export default router;
