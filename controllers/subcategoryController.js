@@ -35,8 +35,9 @@ export const createSubcategory = async (req, res) => {
     .populate('category', 'name')
     .populate('parent', 'name');
 
-  res.status(201).json(populated);
+  res.status(200).json(populated);
 };
+
 
 // PUT /api/subcategories/:id
 export const updateSubcategory = async (req, res) => {

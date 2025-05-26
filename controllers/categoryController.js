@@ -23,6 +23,29 @@ export const getCategoriesWithSubs = async (req, res) => {
 
   res.json(categories);
 };
+// GET /api/categories-with-subcats
+export const getCategoriesWithSubcats = async (req, res) => {
+  const cats = await Category.find({});
+  const results = await Promise.all(cats.map(async cat => {
+    const subs = await Subcategory.find({ category: cat._id })
+      .limit(10)
+      .select('name image');
+    return {
+      _id: cat._id,
+      name: cat.name,
+      image: cat.image,
+      subcategories: subs
+    };
+  }));
+  res.json(results);
+};
+
+// GET /api/categories/:id/subcategories
+export const getAllSubcatsByCategory = async (req, res) => {
+  const subs = await Subcategory.find({ category: req.params.id })
+    .select('name image');
+  res.json(subs);
+};
 
 // GET /api/categories/:id/subcategories
 // Returns *all* subcategories for one category
