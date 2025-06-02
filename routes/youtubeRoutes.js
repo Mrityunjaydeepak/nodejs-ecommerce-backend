@@ -1,5 +1,4 @@
 import express from 'express';
-import { protect, adminOnly } from '../middleware/auth.js';
 import {
   getCategories,
   createCategory,
@@ -12,15 +11,15 @@ import {
 
 const router = express.Router();
 
-router.get('/', protect, adminOnly, getCategories);
-router.post('/', protect, adminOnly, createCategory);
-router.put('/:id', protect, adminOnly, updateCategory);
-router.delete('/:id', protect, adminOnly, deleteCategory);
+router.get('/', getCategories);
+router.post('/', createCategory);
+router.put('/:id', updateCategory);
+router.delete('/:id', deleteCategory);
+
 router.route('/:id/videos')
-  .get(getVideosByCategory)  // <-- new endpoint
+  .get(getVideosByCategory)
   .post(addVideo);
-// manage videos
-router.post('/:id/videos', protect, adminOnly, addVideo);
-router.delete('/:id/videos/:vid', protect, adminOnly, removeVideo);
+
+router.delete('/:id/videos/:vid', removeVideo);
 
 export default router;

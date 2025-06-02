@@ -12,7 +12,7 @@ export const getEnquiries = async (req, res) => {
 // POST /api/enquiries
 // Create a new enquiry for a product
 export const addEnquiry = async (req, res) => {
-  const { productId, message } = req.body;
+  const { productId, message, quantity } = req.body;
 
   // Prevent duplicate enquiries
   const exists = await Enquiry.findOne({ user: req.user._id, product: productId });
@@ -20,7 +20,13 @@ export const addEnquiry = async (req, res) => {
     return res.status(400).json({ message: 'Already enquired about this product' });
   }
 
-  const e = new Enquiry({ user: req.user._id, product: productId, message });
+  const e = new Enquiry({
+    user: req.user._id,
+    product: productId,
+    message,
+    quantity: quantity || 1 // default to 1 if not provided
+  });
+
   const created = await e.save();
 
   // Return populated enquiry

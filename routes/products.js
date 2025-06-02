@@ -4,8 +4,8 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 router.get('/search', searchProducts);
-router.route('/').get(getProducts).post(protect, createProduct);
-router.route('/:id').put(protect, updateProduct).delete(protect, deleteProduct);
+router.route('/').get(getProducts).post(createProduct);
+router.route('/:id').put(updateProduct).delete(protect, deleteProduct);
 router
   .route('/products/:id')        
   .get(getProductDetails);
