@@ -1,11 +1,15 @@
 import Subcategory from '../models/Subcategory.js';
 
 // GET /api/subcategories
+
+/** 
+ * Existing: GET /api/subcategories?categoryId=… 
+ * returns a flat array of subcategories for a given category.
+ */
 export const getSubcategories = async (req, res) => {
   const { categoryId } = req.query;
   let query = {};
 
-  // If they passed ?categoryId=… filter by that
   if (categoryId) {
     query.category = categoryId;
   }
@@ -16,6 +20,61 @@ export const getSubcategories = async (req, res) => {
 
   res.json(subcategories);
 };
+
+/**
+ * NEW: GET /api/subcategories/tree?categoryId=…
+ * Returns all subcategories for a given category, nested by parent → children.
+ */
+export const getSubcategoriesTree = async (req, res) => {
+  try {
+    const { categoryId } = req.query;
+    if (!categoryId) {
+      return res
+        .status(400)
+        .json({ message: 'Please specify ?categoryId=<categoryId>' });
+    }
+
+    // 1) Fetch all subcategories for this category in one go
+    const allSubs = await Subcategory.find({ category: categoryId })
+      .select('_id name image category parent')
+      .lean(); // lean() so we get plain JS objects
+
+    // 2) Build a lookup: id → node (with a `children` array)
+    const map = {};
+    allSubs.forEach((sub) => {
+      map[sub._id.toString()] = {
+        _id: sub._id.toString(),
+        name: sub.name,
+        image: sub.image,
+        parent: sub.parent ? sub.parent.toString() : null,
+        // (we don’t need to send 'category' again, since front‐end already knows it)
+        children: [],
+      };
+    });
+
+    // 3) Populate each node’s `children` array
+    const tree = [];
+    allSubs.forEach((sub) => {
+      const id = sub._id.toString();
+      const parentId = sub.parent ? sub.parent.toString() : null;
+
+      if (parentId && map[parentId]) {
+        // Attach to its parent’s children
+        map[parentId].children.push(map[id]);
+      } else {
+        // No parent → root‐level subcategory
+        tree.push(map[id]);
+      }
+    });
+
+    // 4) Send back only the root‐level array (with nested children inside)
+    return res.json(tree);
+  } catch (err) {
+    console.error('Error building subcategories tree:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 
 // POST /api/subcategories
 export const createSubcategory = async (req, res) => {
