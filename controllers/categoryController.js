@@ -46,6 +46,52 @@ export const getAllSubcatsByCategory = async (req, res) => {
     .select('name image');
   res.json(subs);
 };
+/**
+ * GET /api/categories/tree
+ * Returns a nested array of all categories and subcategories in a single JSON tree.
+ */
+export const getCategoriesTree = async (req, res) => {
+  try {
+    // 1) Load all categories (only the fields we need: _id, name, image, parent)
+    const allCats = await Category.find({})
+      .select('_id name image parent')
+      .lean(); // lean() returns plain JS objects instead of Mongoose documents
+
+    // 2) Build a lookup map: id → node-with-children
+    const map = {};
+    allCats.forEach(cat => {
+      const id = cat._id.toString();
+      map[id] = {
+        _id: id,
+        name: cat.name,
+        image: cat.image,
+        parent: cat.parent ? cat.parent.toString() : null,
+        children: []
+      };
+    });
+
+    // 3) Iterate again and attach each node to its parent's `children[]`
+    const tree = [];
+    allCats.forEach(cat => {
+      const id = cat._id.toString();
+      const parentId = cat.parent ? cat.parent.toString() : null;
+
+      if (parentId && map[parentId]) {
+        // If parent exists, push this node under its parent
+        map[parentId].children.push(map[id]);
+      } else {
+        // If parent is null or not found, it’s a root
+        tree.push(map[id]);
+      }
+    });
+
+    // 4) Send back the array of root nodes (with nested `children`)
+    return res.json(tree);
+  } catch (err) {
+    console.error('Error building categories tree:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
 
 // GET /api/categories/:id/subcategories
 // Returns *all* subcategories for one category
