@@ -1,4 +1,5 @@
 import Category from '../models/Category.js';
+import Subcategory from '../models/Subcategory.js';
 
 export const getCategories = async (req, res) => {
   const categories = await Category.find({});
@@ -50,46 +51,54 @@ export const getAllSubcatsByCategory = async (req, res) => {
  * GET /api/categories/tree
  * Returns a nested array of all categories and subcategories in a single JSON tree.
  */
-export const getCategoriesTree = async (req, res) => {
+export const getCategorySubcategoryTree = async (req, res) => {
   try {
-    // 1) Load all categories (only the fields we need: _id, name, image, parent)
-    const allCats = await Category.find({})
-      .select('_id name image parent')
-      .lean(); // lean() returns plain JS objects instead of Mongoose documents
+    const categories = await Category.find().lean();
+    const subcategories = await Subcategory.find().lean();
 
-    // 2) Build a lookup map: id → node-with-children
-    const map = {};
-    allCats.forEach(cat => {
-      const id = cat._id.toString();
-      map[id] = {
-        _id: id,
-        name: cat.name,
-        image: cat.image,
-        parent: cat.parent ? cat.parent.toString() : null,
-        children: []
-      };
+    // Step 1: Build subcategory tree map per category
+    const subsByCat = {};
+    const subsById = {};
+
+    subcategories.forEach(sub => {
+      const catId = sub.category.toString();
+      const subId = sub._id.toString();
+
+      subsById[subId] = { ...sub, children: [] };
+
+      if (!subsByCat[catId]) subsByCat[catId] = [];
+      subsByCat[catId].push(subsById[subId]);
     });
 
-    // 3) Iterate again and attach each node to its parent's `children[]`
-    const tree = [];
-    allCats.forEach(cat => {
-      const id = cat._id.toString();
-      const parentId = cat.parent ? cat.parent.toString() : null;
-
-      if (parentId && map[parentId]) {
-        // If parent exists, push this node under its parent
-        map[parentId].children.push(map[id]);
-      } else {
-        // If parent is null or not found, it’s a root
-        tree.push(map[id]);
+    // Step 2: Nest sub-subcategories (children)
+    Object.values(subsById).forEach(sub => {
+      if (sub.parent) {
+        const parentId = sub.parent.toString();
+        if (subsById[parentId]) {
+          subsById[parentId].children.push(sub);
+        }
       }
     });
 
-    // 4) Send back the array of root nodes (with nested `children`)
-    return res.json(tree);
+    // Step 3: Build final tree
+    const result = categories.map(cat => {
+      const catId = cat._id.toString();
+      const allSubs = subsByCat[catId] || [];
+
+      const rootSubs = allSubs.filter(sub => !sub.parent); // top-level only
+
+      return {
+        _id: cat._id,
+        name: cat.name,
+        image: cat.image,
+        subcategories: rootSubs
+      };
+    });
+
+    res.json(result);
   } catch (err) {
-    console.error('Error building categories tree:', err);
-    return res.status(500).json({ message: 'Server error' });
+    console.error('Error building category-subcategory tree:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
