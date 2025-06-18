@@ -2,23 +2,19 @@
 import express from 'express';
 import {
   getCatalogues,
-  getCataloguesByType,
   createCatalogue,
   deleteCatalogue
 } from '../controllers/catalogueController.js';
 
 const router = express.Router();
 
-// GET /api/catalogues
+// GET all catalogues
 router.get('/', getCatalogues);
 
-// GET /api/catalogues/type/:typeId
-router.get('/type/:typeId', getCataloguesByType);
-
-// POST /api/catalogues
+// POST create new catalogue
 router.post('/', createCatalogue);
 
-// DELETE /api/catalogues/:id
+// DELETE a catalogue by ID
 router.delete('/:id', deleteCatalogue);
 
 export default router;

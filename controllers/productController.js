@@ -7,12 +7,10 @@ import Enquiry from '../models/Enquiry.js';
 export const getProducts = async (req, res) => {
   const { categoryId, subcategoryId, page = 1, limit = 10 } = req.query;
 
-  // Normalize pagination
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.max(1, parseInt(limit, 10));
   const skip = (pageNum - 1) * limitNum;
 
-  // Build filter
   const filter = {};
 
   if (categoryId) {
@@ -26,15 +24,15 @@ export const getProducts = async (req, res) => {
 
   const total = await Product.countDocuments(filter);
 
-  // Prepare favourites and enquiries for user
   let favIds = [];
   let enquiryIds = [];
 
-  if (req.user && req.user._id) {
-    const favs = await Favourite.find({ user: req.user._id }).select('product');
+  if (req.user?._id) {
+    const [favs, enqs] = await Promise.all([
+      Favourite.find({ user: req.user._id }).select('product'),
+      Enquiry.find({ user: req.user._id }).select('product'),
+    ]);
     favIds = favs.map(f => f.product.toString());
-
-    const enqs = await Enquiry.find({ user: req.user._id }).select('product');
     enquiryIds = enqs.map(e => e.product.toString());
   }
 
@@ -66,18 +64,17 @@ export const getProductDetails = async (req, res) => {
     .populate('subcategory', 'name')
     .populate('combinations', 'name');
 
-  if (!product) {
-    return res.status(404).json({ message: 'Product not found' });
-  }
+  if (!product) return res.status(404).json({ message: 'Product not found' });
 
   let isFavourite = false;
   let isEnquired = false;
 
-  if (req.user && req.user._id) {
-    const fav = await Favourite.findOne({ user: req.user._id, product: product._id });
+  if (req.user?._id) {
+    const [fav, eq] = await Promise.all([
+      Favourite.findOne({ user: req.user._id, product: product._id }),
+      Enquiry.findOne({ user: req.user._id, product: product._id }),
+    ]);
     isFavourite = !!fav;
-
-    const eq = await Enquiry.findOne({ user: req.user._id, product: product._id });
     isEnquired = !!eq;
   }
 
@@ -168,6 +165,7 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   const product = await Product.findById(req.params.id);
   if (!product) return res.status(404).json({ message: 'Product not found' });
+
   await product.remove();
   res.json({ message: 'Product removed' });
 };
@@ -175,6 +173,7 @@ export const deleteProduct = async (req, res) => {
 // GET /api/products/search?q=term&page=1&limit=10
 export const searchProducts = async (req, res) => {
   const { q = '', categoryId, subcategoryId, page = 1, limit = 10 } = req.query;
+
   const pageNum = Math.max(1, parseInt(page, 10));
   const limitNum = Math.max(1, parseInt(limit, 10));
   const skip = (pageNum - 1) * limitNum;
@@ -182,8 +181,8 @@ export const searchProducts = async (req, res) => {
   const filter = {
     $or: [
       { name: { $regex: q, $options: 'i' } },
-      { description: { $regex: q, $options: 'i' } }
-    ]
+      { description: { $regex: q, $options: 'i' } },
+    ],
   };
 
   if (categoryId) {
@@ -197,17 +196,36 @@ export const searchProducts = async (req, res) => {
 
   const total = await Product.countDocuments(filter);
 
+  let favIds = [];
+  let enquiryIds = [];
+
+  if (req.user?._id) {
+    const [favs, enqs] = await Promise.all([
+      Favourite.find({ user: req.user._id }).select('product'),
+      Enquiry.find({ user: req.user._id }).select('product'),
+    ]);
+    favIds = favs.map(f => f.product.toString());
+    enquiryIds = enqs.map(e => e.product.toString());
+  }
+
   const products = await Product.find(filter)
     .populate('subcategory', 'name')
     .populate('combinations', 'name')
     .skip(skip)
     .limit(limitNum);
 
+  const data = products.map(prod => {
+    const obj = prod.toObject();
+    obj.isFavourite = favIds.includes(prod._id.toString());
+    obj.isEnquired = enquiryIds.includes(prod._id.toString());
+    return obj;
+  });
+
   res.json({
     total,
     page: pageNum,
     pages: Math.ceil(total / limitNum),
     limit: limitNum,
-    data: products
+    data,
   });
 };
