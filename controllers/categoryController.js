@@ -53,45 +53,54 @@ export const getAllSubcatsByCategory = async (req, res) => {
  */
 export const getCategorySubcategoryTree = async (req, res) => {
   try {
-    const categories = await Category.find().lean();
+    // 1) load raw data
+    const categories   = await Category.find().lean();
     const subcategories = await Subcategory.find().lean();
 
-    // Step 1: Build subcategory tree map per category
-    const subsByCat = {};
-    const subsById = {};
+    // 2) build lookup maps
+    const subsByCat = {};    // categoryId → [ subNodes… ]
+    const subsById  = {};    // subId        → node
 
     subcategories.forEach(sub => {
       const catId = sub.category.toString();
       const subId = sub._id.toString();
 
-      subsById[subId] = { ...sub, children: [] };
+      // initialize each node with empty children + hasChildren=false
+      subsById[subId] = {
+        ...sub,
+        children:    [],
+        hasChildren: false,
+      };
 
-      if (!subsByCat[catId]) subsByCat[catId] = [];
+      subsByCat[catId] = subsByCat[catId] || [];
       subsByCat[catId].push(subsById[subId]);
     });
 
-    // Step 2: Nest sub-subcategories (children)
-    Object.values(subsById).forEach(sub => {
-      if (sub.parent) {
-        const parentId = sub.parent.toString();
-        if (subsById[parentId]) {
-          subsById[parentId].children.push(sub);
+    // 3) wire up parent ↔ children and flip hasChildren
+    Object.values(subsById).forEach(node => {
+      if (node.parent) {
+        const parentId = node.parent.toString();
+        const parentNode = subsById[parentId];
+        if (parentNode) {
+          parentNode.children.push(node);
+          parentNode.hasChildren = true;
         }
       }
     });
 
-    // Step 3: Build final tree
+    // 4) assemble final tree
     const result = categories.map(cat => {
       const catId = cat._id.toString();
       const allSubs = subsByCat[catId] || [];
 
-      const rootSubs = allSubs.filter(sub => !sub.parent); // top-level only
+      // only the top‐level subcategories (no parent)
+      const rootSubs = allSubs.filter(s => !s.parent);
 
       return {
-        _id: cat._id,
-        name: cat.name,
-        image: cat.image,
-        subcategories: rootSubs
+        _id:           cat._id,
+        name:          cat.name,
+        image:         cat.image,
+        subcategories: rootSubs,
       };
     });
 

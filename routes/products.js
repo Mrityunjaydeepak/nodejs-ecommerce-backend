@@ -11,22 +11,19 @@ import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// GET /api/products/search?q=…       → searchProducts
+// search can stay public if you like:
+// GET /api/products/search?q=…
 router.get('/search', searchProducts);
 
-// GET  /api/products                → getProducts
-// POST /api/products                → createProduct
+// now require login for listing + detail views:
 router
   .route('/')
-  .get(getProducts)
+  .get(protect, getProducts)         // ← added protect here
   .post(protect, createProduct);
 
-// GET    /api/products/:id          → getProductDetails
-// PUT    /api/products/:id          → updateProduct
-// DELETE /api/products/:id          → deleteProduct
 router
   .route('/:id')
-  .get(getProductDetails)
+  .get(protect, getProductDetails)   // ← added protect here
   .put(protect, updateProduct)
   .delete(protect, deleteProduct);
 
