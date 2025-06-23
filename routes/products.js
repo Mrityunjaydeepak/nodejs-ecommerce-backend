@@ -1,3 +1,4 @@
+// routes/productRoutes.js
 import express from 'express';
 import {
   getProducts,
@@ -8,22 +9,22 @@ import {
   searchProducts,
 } from '../controllers/productController.js';
 import { protect } from '../middleware/auth.js';
+import { attachUser } from '../middleware/attachUser.js';
 
 const router = express.Router();
 
-// search can stay public if you like:
-// GET /api/products/search?q=…
-router.get('/search', searchProducts);
+// SEARCH: allow anon + logged-in
+router.get('/search', attachUser, searchProducts);
 
-// now require login for listing + detail views:
+// LIST & DETAIL: allow anon + logged-in
 router
   .route('/')
-  .get(protect, getProducts)         // ← added protect here
+  .get(attachUser, getProducts)
   .post(protect, createProduct);
 
 router
   .route('/:id')
-  .get(protect, getProductDetails)   // ← added protect here
+  .get(attachUser, getProductDetails)
   .put(protect, updateProduct)
   .delete(protect, deleteProduct);
 
