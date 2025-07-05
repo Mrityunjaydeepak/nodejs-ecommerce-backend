@@ -83,6 +83,65 @@ export const getSubcategoriesTree = async (req, res) => {
   }
 };
 
+/**
+ * NEW: GET /api/subcategories/subtree
+ * Returns the full subtree rooted at the given subCategoryId.
+ * Expects: ?subCategoryId=<id>
+ */
+export const getSubcategorySubtree = async (req, res) => {
+  try {
+    const { subCategoryId } = req.query;
+    if (!subCategoryId) {
+      return res
+        .status(400)
+        .json({ message: 'Please specify ?subCategoryId=<subCategoryId>' });
+    }
+
+    // 1) fetch the root subcategory to get its category
+    const rootSub = await Subcategory.findById(subCategoryId).lean();
+    if (!rootSub) {
+      return res.status(404).json({ message: 'Subcategory not found' });
+    }
+    const categoryId = rootSub.category.toString();
+
+    // 2) fetch all subcategories in that category
+    const allSubs = await Subcategory.find({ category: categoryId })
+      .select('_id name image category parent')
+      .lean();
+
+    // 3) build lookup map with children & flag
+    const map = {};
+    allSubs.forEach(sub => {
+      const id = sub._id.toString();
+      map[id] = {
+        _id: id,
+        name: sub.name,
+        image: sub.image,
+        parent: sub.parent ? sub.parent.toString() : null,
+        children: [],
+        hasChildren: false,
+      };
+    });
+
+    // 4) link up parent → children and set hasChildren
+    allSubs.forEach(sub => {
+      const id = sub._id.toString();
+      const p = sub.parent ? sub.parent.toString() : null;
+      if (p && map[p]) {
+        map[p].children.push(map[id]);
+        map[p].hasChildren = true;
+      }
+    });
+
+    // 5) extract and return just the requested subtree
+    const subtree = map[subCategoryId];
+    return res.json(subtree);
+  } catch (err) {
+    console.error('Error building subcategory subtree:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // POST /api/subcategories
 export const createSubcategory = async (req, res) => {
   try {

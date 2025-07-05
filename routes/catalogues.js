@@ -3,7 +3,8 @@ import express from 'express';
 import {
   getCatalogues,
   createCatalogue,
-  deleteCatalogue
+  deleteCatalogue,
+  updateCatalogue,    // ← import the new controller
 } from '../controllers/catalogueController.js';
 
 const router = express.Router();
@@ -13,6 +14,9 @@ router.get('/', getCatalogues);
 
 // POST create new catalogue
 router.post('/', createCatalogue);
+
+// PUT update an existing catalogue by ID
+router.put('/:id', updateCatalogue);
 
 // DELETE a catalogue by ID
 router.delete('/:id', deleteCatalogue);

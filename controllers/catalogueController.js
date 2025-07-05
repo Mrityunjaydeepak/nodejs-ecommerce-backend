@@ -44,3 +44,32 @@ export const deleteCatalogue = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete catalogue', error: err.message });
   }
 };
+
+
+
+// PUT /api/catalogues/:id
+// Update a catalogue by ID
+export const updateCatalogue = async (req, res) => {
+  const { name, pdf, thumbnail, description } = req.body;
+
+  // you can enforce required fields here if you like:
+  if (!name || !pdf || !thumbnail) {
+    return res.status(400).json({ message: 'Name, PDF, and thumbnail are required' });
+  }
+
+  try {
+    const updated = await Catalogue.findByIdAndUpdate(
+      req.params.id,
+      { name, pdf, thumbnail, description },
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Catalogue not found' });
+    }
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update catalogue', error: err.message });
+  }
+};
